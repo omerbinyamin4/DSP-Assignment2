@@ -12,9 +12,16 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+
 
 public class TriGramsMR {
     public enum N{
@@ -37,8 +44,9 @@ public class TriGramsMR {
                 return;
             triGram.set(words[0]);
             int currNGramLength = words[0].split(" ").length;
-            if(currNGramLength < 3)
+            if(currNGramLength < 3 || containsStopWords(words[0]))
                 return;
+
             int corpusPartitionGroup = (int)(Math.random() * 2);
 
             //TODO: how can be refactored?
@@ -111,7 +119,7 @@ public class TriGramsMR {
 
     }
 
-    //TODO: refactor to updated version of haddop
+    //TODO: refactor to updated version of hadoop
     public static void writeN(Configuration conf, String bucketname, Job job)  throws IOException, InterruptedException {
         long n = job.getCounters().findCounter(TaskCounter.MAP_OUTPUT_RECORDS).getValue();
         FileSystem fileSystem = FileSystem.get(URI.create("s3://" + bucketname), conf);
@@ -123,6 +131,22 @@ public class TriGramsMR {
 
     }
 
+    public static boolean containsStopWords(String triGram) throws FileNotFoundException {
+        List<String> wordsList = new ArrayList<>(Arrays.asList(triGram.split("")));
+        try {
+            Scanner myReader = new Scanner(new File("src/main/java/eng-stopwords.txt"));
+            while (myReader.hasNextLine()) {
+                String stopWord = myReader.nextLine();
+                if (wordsList.contains(stopWord)) {
+                    return true;
+                }
+            }
 
+        }
+        catch (FileNotFoundException e){
+            System.out.println(e.getMessage());
+        }
+        return false;
+    }
 
 }
