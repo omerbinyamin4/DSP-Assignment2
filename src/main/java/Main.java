@@ -21,12 +21,11 @@ public class Main {
 
     private static final String myBucketName = "dsp2-hadoop";
     private static final String TriGramsCount = "TriGramsMR";
-    private static final String RAndCrossValCounts = "RAndCrossValCounts";
-    private static final String myJarName = "ass2jar.jar";
-    //private static final String rCount = "RCount";
-    //private static final String crossValidationCount = "CrossValCount";
-    private static final String joinAndCalc = "JoinAndCalc";
-    private static final String sortGrams = "Sort";
+    private static final String ParamsMR = "ParamsMR";
+    private static final String myJarName = "ass2LA.jar";
+//    private static final String myJarName = "ass2jar.jar";
+    private static final String ProbCalc = "ProbCalc";
+    private static final String SortResults = "SortResults";
     private static final String myKeyPair = "arnon";
 
 
@@ -53,47 +52,47 @@ public class Main {
                 .actionOnFailure("TERMINATE_JOB_FLOW")
                 .build();
         // ======================Step 2===========================
-//        HadoopJarStepConfig RAndCrossValCountsStep = HadoopJarStepConfig.builder()
-//                .args("s3n://" + myBucketName + "/output1/", "s3n://" + myBucketName + "/output2/")
-//                .jar("s3://" + myBucketName + "/" + myJarName)
-//                .mainClass("RAndCrossValCounts")
-//                .build();
-//        StepConfig RAndCrossValCountsConf = StepConfig.builder()
-//                .name("hadoop-" + RAndCrossValCounts)
-//                .hadoopJarStep(RAndCrossValCountsStep)
-//                .actionOnFailure("TERMINATE_JOB_FLOW")
-//                .build();
+        HadoopJarStepConfig ParamsMRStep = HadoopJarStepConfig.builder()
+                .args("s3n://" + myBucketName + "/output1/", "s3n://" + myBucketName + "/output2/")
+                .jar("s3://" + myBucketName + "/" + myJarName)
+                .mainClass("ParamsMR")
+                .build();
+        StepConfig ParamsMRConf = StepConfig.builder()
+                .name("hadoop-" + ParamsMR)
+                .hadoopJarStep(ParamsMRStep)
+                .actionOnFailure("TERMINATE_JOB_FLOW")
+                .build();
 //
 //        // ======================Step 3===========================
-//        HadoopJarStepConfig joinAndCalcStep = HadoopJarStepConfig.builder()
-//                .args(myBucketName, "s3n://" + myBucketName + "/output2/", "s3n://" + myBucketName + "/output3/")
-//                .jar("s3://" + myBucketName + "/" + myJarName)
-//                .mainClass("JoinAndCalculate")
-//                .build();
-//        StepConfig joinAndCalcConf = StepConfig.builder()
-//                .name("hadoop-" + joinAndCalc)
-//                .hadoopJarStep(RAndCrossValCountsStep)
-//                .actionOnFailure("TERMINATE_JOB_FLOW")
-//                .build();
+        HadoopJarStepConfig ProbCalcStep = HadoopJarStepConfig.builder()
+                .args(myBucketName, "s3n://" + myBucketName + "/output2/", "s3n://" + myBucketName + "/output3/")
+                .jar("s3://" + myBucketName + "/" + myJarName)
+                .mainClass("ProbCalc")
+                .build();
+        StepConfig ProbCalcConf = StepConfig.builder()
+                .name("hadoop-" + ProbCalc)
+                .hadoopJarStep(ProbCalcStep)
+                .actionOnFailure("TERMINATE_JOB_FLOW")
+                .build();
 //
 //
 //        // ======================Step 4===========================
-//        HadoopJarStepConfig sortGramsStep = HadoopJarStepConfig.builder()
-//                .args("s3n://" + myBucketName + "/output3/", "s3n://" + myBucketName + "/output4/")
-//                .jar("s3://" + myBucketName + "/" + myJarName)
-//                .mainClass("ValueToKeySort")
-//                .build();
-//        StepConfig sortGramsConf = StepConfig.builder()
-//                .name("hadoop-" + sortGrams)
-//                .hadoopJarStep(sortGramsStep)
-//                .actionOnFailure("TERMINATE_JOB_FLOW")
-//                .build();
+        HadoopJarStepConfig SortResultsStep = HadoopJarStepConfig.builder()
+                .args("s3n://" + myBucketName + "/output3/", "s3n://" + myBucketName + "/output4/")
+                .jar("s3://" + myBucketName + "/" + myJarName)
+                .mainClass("SortResults")
+                .build();
+        StepConfig SortResultsConf = StepConfig.builder()
+                .name("hadoop-" + SortResults)
+                .hadoopJarStep(SortResultsStep)
+                .actionOnFailure("TERMINATE_JOB_FLOW")
+                .build();
 
 
         steps.add(TriGramsStepConf);
-//        steps.add(RAndCrossValCountsConf);
-//        steps.add(joinAndCalcConf);
-//        steps.add(sortGramsConf);
+        steps.add(ParamsMRConf);
+        steps.add(ProbCalcConf);
+        steps.add(SortResultsConf);
 
         JobFlowInstancesConfig instances = JobFlowInstancesConfig.builder()
                 .instanceCount(4)
@@ -104,14 +103,8 @@ public class Main {
                 .placement(PlacementType.builder().availabilityZone("us-east-1a").build())
                 .build();
 
-//
-//        Map<String,String> properties = new HashMap<>();
-//        properties.put("JAVA_HOME", "/usr/lib/jvm/java-1.8.0");
-//
         RunJobFlowRequest runFlowRequest = RunJobFlowRequest.builder()
                 .releaseLabel("emr-5.2.0")
-                //.withAmiVersion("")
-//                .configurations(Configuration.builder().classification("hadoop-env").properties(properties).build())
                 .name("hadoop-ass2")
                 .instances(instances)
                 .steps(steps)
@@ -123,7 +116,7 @@ public class Main {
         RunJobFlowResponse runJobFlowResponse = emrClient.runJobFlow(runFlowRequest);
 
         String jobFlowId = runJobFlowResponse.jobFlowId();
-        System.out.println("Ran job flow with id: " + jobFlowId);
+        System.out.println("Job Flow Started: " + jobFlowId);
     }
 
 }

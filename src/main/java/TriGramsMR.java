@@ -11,6 +11,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
+import software.amazon.awssdk.services.s3.endpoints.internal.Value;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -28,7 +29,7 @@ public class TriGramsMR {
         Count
     };
 
-    public static class MapperClass extends Mapper<LongWritable, Text, Text, IntWritable> {
+    public static class MapperClass extends Mapper<LongWritable, Text, Text, PairWritable<IntWritable,IntWritable>> {
         private final static IntWritable one = new IntWritable(1);
         private final static IntWritable zero = new IntWritable(0);
         private Text triGram = new Text("");
@@ -47,39 +48,34 @@ public class TriGramsMR {
             if(currNGramLength < 3 || containsStopWords(words[0]))
                 return;
 
-            int corpusPartitionGroup = (int)(Math.random() * 2);
-
             //TODO: how can be refactored?
             context.getCounter(N.Count).increment(1);
 
+            int corpusPartitionGroup = (int)(Math.random() * 2);
             if (corpusPartitionGroup == 0){
-                context.write(triGram, zero);
+                context.write(triGram, new PairWritable<>(one, zero));
             }
             else{
-                context.write(triGram, one);
+                context.write(triGram, new PairWritable<>(zero, one));
             }
         }
     }
 
-    public static class ReducerClass extends Reducer<Text,IntWritable,Text,PairWritable<IntWritable, IntWritable>> {
+    public static class ReducerClass extends Reducer<Text,PairWritable<IntWritable, IntWritable>,Text,PairWritable<IntWritable, IntWritable>> {
 
 
         @Override
-        public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException,  InterruptedException {
+        public void reduce(Text key, Iterable<PairWritable<IntWritable, IntWritable>> values, Context context) throws IOException,  InterruptedException {
             int groupZeroCount = 0;
             int groupOneCount = 0;
-            for (IntWritable value : values) {
-                if (value.get() == 1){
-                    groupOneCount++;
-                }
-                else {
-                    groupZeroCount++;
-                }
+            for (PairWritable<IntWritable, IntWritable> value : values) {
+                groupZeroCount += value.first.get();
+                groupOneCount += value.second.get();
             }
             context.write(key, new PairWritable<>(new IntWritable(groupZeroCount), new IntWritable(groupOneCount)));        }
     }
 
-    //TODO: refactor to updated version of haddop
+    //TODO: refactor to updated version of hadoop
     public static void main(String args[]) throws IOException, ClassNotFoundException, InterruptedException {
         //String log4jConfPath = "G:/hadoop-2.6.2/etc/hadoop/log4j.properties";
         //PropertyConfigurator.configure(log4jConfPath);
@@ -94,19 +90,18 @@ public class TriGramsMR {
         job.setJarByClass(TriGramsMR.class);
 
         job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(IntWritable.class);
+        job.setMapOutputValueClass(PairWritable.class);
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(PairWritable.class);
 
         job.setMapperClass(MapperClass.class);
-        job.setReducerClass(ReducerClass.class);
         job.setCombinerClass(ReducerClass.class);
+        job.setReducerClass(ReducerClass.class);
+
 
         job.setInputFormatClass(SequenceFileInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);
-
-        //job.setNumReduceTasks(1);
 
         FileInputFormat.addInputPath(job, new Path(args[argsLength-2]));
         FileOutputFormat.setOutputPath(job, new Path(args[argsLength-1]));
