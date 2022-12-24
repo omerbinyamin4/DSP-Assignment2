@@ -94,14 +94,14 @@ public class TriGramsMR {
         job.setJarByClass(TriGramsMR.class);
 
         job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(PairWritable.class);
+        job.setMapOutputValueClass(IntWritable.class);
 
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(PairWritable.class);
 
         job.setMapperClass(MapperClass.class);
         job.setReducerClass(ReducerClass.class);
-        //job.setCombinerClass(ReducerClass.class);
+        job.setCombinerClass(ReducerClass.class);
 
         job.setInputFormatClass(SequenceFileInputFormat.class);
         job.setOutputFormatClass(TextOutputFormat.class);

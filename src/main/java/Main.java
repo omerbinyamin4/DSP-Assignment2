@@ -11,8 +11,10 @@ import com.amazonaws.*;
 
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 
 public class Main {
@@ -39,8 +41,9 @@ public class Main {
         List<StepConfig> steps = new LinkedList<StepConfig>();
 
         // ======================Step 1===========================
+        String GoogleEnglish3Grams = "s3://datasets.elasticmapreduce/ngrams/books/20090715/eng-us-all/3gram/data";
         HadoopJarStepConfig TriGramsStep = HadoopJarStepConfig.builder()
-                .args(myBucketName,"s3n://" + myBucketName + "/input3grams/","s3n://" + myBucketName + "/output1/")
+                .args(myBucketName, GoogleEnglish3Grams, "s3n://" + myBucketName + "/output1/")
                 .jar("s3://" + myBucketName + "/" + myJarName)
                 .mainClass("TriGramsMR")
                 .build();
@@ -96,15 +99,19 @@ public class Main {
                 .instanceCount(4)
                 .masterInstanceType(InstanceType.M4_LARGE.toString())
                 .slaveInstanceType(InstanceType.M4_LARGE.toString())
-                .hadoopVersion("2.10.1").ec2KeyName(myKeyPair)
+                .hadoopVersion("3.4.4").ec2KeyName(myKeyPair)
                 .keepJobFlowAliveWhenNoSteps(false)
                 .placement(PlacementType.builder().availabilityZone("us-east-1a").build())
                 .build();
 
-
+//
+//        Map<String,String> properties = new HashMap<>();
+//        properties.put("JAVA_HOME", "/usr/lib/jvm/java-1.8.0");
+//
         RunJobFlowRequest runFlowRequest = RunJobFlowRequest.builder()
-                .releaseLabel("emr-4.2.0")
+                .releaseLabel("emr-5.2.0")
                 //.withAmiVersion("")
+//                .configurations(Configuration.builder().classification("hadoop-env").properties(properties).build())
                 .name("hadoop-ass2")
                 .instances(instances)
                 .steps(steps)
