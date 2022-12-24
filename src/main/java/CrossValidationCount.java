@@ -55,11 +55,12 @@ public class CrossValidationCount {
             int sum = 0;
             String tag;
             List<String> ngrams = new LinkedList<>();
-            for (PairIntTextWritable pair : values) {
+            for (PairWritable pair : values) {
                 if(!(ngrams.contains(pair.second.toString()))){
                     ngrams.add(pair.second().toString());
                 }
-                sum += pair.first.get();
+
+                sum += ((IntWritable)pair.first).get();
             }
 
             if(key.second.get() == 0) {
@@ -69,7 +70,7 @@ public class CrossValidationCount {
             }
 
             for (String ngram : ngrams) {
-                context.write(new Text(ngram), new PairIntTextWritable(new IntWritable(sum), new Text(tag)));
+                context.write(new Text(ngram), new PairWritable<>(new IntWritable(sum), new Text(tag)));
             }
         }
 
