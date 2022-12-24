@@ -1,50 +1,43 @@
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.DoubleWritable;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
-import org.apache.hadoop.mapred.JobConf;
-import org.apache.hadoop.mapred.Partitioner;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.SequenceFileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hadoop.util.GenericOptionsParser;
-import org.apache.log4j.PropertyConfigurator;
 
 import java.io.IOException;
 
-public class ValueToKeySort {
+public class SortResults {
 
-    public static class MapperClass extends Mapper<LongWritable, Text, PairTextDoubleWritable, Text> {
+    public static class MapperClass extends Mapper<LongWritable, Text, PairWritable<Text, DoubleWritable>, Text> {
 
         private String[] words;
 
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException,  InterruptedException {
-            words = value.toString().split("\t");
-            DoubleWritable probability = new DoubleWritable(Double.valueOf(words[1]));
-            String[] trigram = words[0].split(" ");
-            if(trigram.length>2) {
-                context.write(new PairTextDoubleWritable(new Text(trigram[0] + " " + trigram[1]),probability),
-                        new Text(trigram[2]));
-            }
+            String[] triGramWordsAndScore = value.toString().split("\t");
+            String[] triGramWords = triGramWordsAndScore[0].split(" ");
+            String firstWord = triGramWords[0];
+            String secondWord = triGramWords[1];
+            String thirdWord = triGramWords[2];
+
+            DoubleWritable probabilityScore = new DoubleWritable(Double.valueOf(triGramWordsAndScore[1]));
+            context.write(new PairWritable<>(new Text(firstWord + " " + secondWord), probabilityScore), new Text(thirdWord));
         }
     }
 
-    public static class ReducerClass extends Reducer<PairTextDoubleWritable,Text,Text,DoubleWritable> {
+    public static class ReducerClass extends Reducer<PairWritable<Text, DoubleWritable>, Text, Text, DoubleWritable> {
 
         @Override
-        public void reduce(PairTextDoubleWritable key, Iterable<Text> values, Context context) throws IOException,  InterruptedException {
-            for(Text w3 : values) {
-                context.write(new Text(key.first.toString()+" "+w3.toString()),key.second);
+        public void reduce(PairWritable<Text, DoubleWritable> key, Iterable<Text> values, Context context) throws IOException,  InterruptedException {
+            for(Text thirdWord : values) {
+                context.write(new Text(key.first.toString() + " " + thirdWord.toString()), key.second);
             }
         }
 
@@ -60,9 +53,9 @@ public class ValueToKeySort {
 
         Configuration conf = new Configuration();
         Job job = new Job(conf, "Sort");
-        job.setJarByClass(ValueToKeySort.class);
+        job.setJarByClass(SortResults.class);
 
-        job.setMapOutputKeyClass(PairTextDoubleWritable.class);
+        job.setMapOutputKeyClass(PairWritable.class);
         job.setMapOutputValueClass(Text.class);
 
         job.setOutputKeyClass(Text.class);

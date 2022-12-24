@@ -10,13 +10,12 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.log4j.PropertyConfigurator;
 
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
-public class RAndCrossValCounts {
+public class ParamsMR {
 
     public static class MapperClass extends Mapper<LongWritable, Text,
             PairWritable<IntWritable, Text>, PairWritable<IntWritable, Text>> {
@@ -39,38 +38,40 @@ public class RAndCrossValCounts {
             if(words[2] != null)
                 groupOneCount.set(Integer.valueOf(words[2]));
 
-            //TODO: refactor comments
-            //==========================RCount================================//
-            PairWritable<IntWritable, Text> triGramKey = new PairWritable(one, triGram);
-            //first group count (the index of the group is 0), the value is the 3gram with its count(1 time ectually)
-            context.write(new PairWritable(groupZeroCount, new Text("NR0")), triGramKey);
-            //second group count (the index of the group is 1), the value is the 3gram with its count(1 time ectually)
-            context.write(new PairWritable(groupOneCount, new Text("NR1")), triGramKey);
+            // NR values definitions
+            PairWritable<IntWritable, Text> triGramKey = new PairWritable(triGram, one);
+            // summing up these lines later will produce nr0 of all r values.  groupZeroCount = r , each triGram has value of 1 for counting purposes
+            context.write(new PairWritable(new Text("NR0"), groupZeroCount), triGramKey);
+            // summing up these lines later will produce nr1 of all r values.  groupOneCount = r , each triGram has value of 1 for counting purposes
+            context.write(new PairWritable(new Text("NR1"), groupOneCount), triGramKey);
 
-            //=====================CrossValidationCount=======================//
-            //first group count (the index of the group is 0), the value is the 3gram with the second group count
-            context.write(new PairWritable(groupZeroCount, new Text("TR0")), new PairWritable(groupOneCount, triGram));
-            //second group count (the index of the group is 1), the value is the 3gram with the first group count
-            context.write(new PairWritable(groupOneCount, new Text("TR1")), new PairWritable(groupZeroCount, triGram));
+            // TR values definitions
+            // summing up these lines later will produce tr01 of all r values.  groupZeroCount = r , each value has the triGram itself and number of its occurrences in the opposite group (group one)
+            context.write(new PairWritable(new Text("TR01"), groupZeroCount), new PairWritable(triGram, groupOneCount));
+            // summing up these lines later will produce tr10 of all r values.  groupOneCount = r , each value has the triGram itself and number of its occurrences in the opposite group (group zero)
+            context.write(new PairWritable(new Text("TR10"), groupOneCount), new PairWritable(triGram, groupZeroCount));
         }
     }
 
-    public static class ReducerClass extends Reducer<PairWritable<IntWritable, Text>, PairWritable<IntWritable, Text>,
-            Text,PairWritable<IntWritable, Text>> {
+    public static class ReducerClass extends Reducer<PairWritable<Text, IntWritable>, PairWritable<Text, IntWritable>,
+            Text, PairWritable<Text, IntWritable>> {
 
         @Override
-        public void reduce(PairWritable<IntWritable, Text> key, Iterable<PairWritable<IntWritable, Text>> values, Context context) throws IOException,  InterruptedException {
-            int sum = 0;
+        public void reduce(PairWritable<Text, IntWritable> key, Iterable<PairWritable<Text, IntWritable>> values, Context context) throws IOException,  InterruptedException {
+            // valueSum is for summing up the counts for each nr/tr value (according to the key text)
+            int valueSum = 0;
             List<String> triGrams = new LinkedList<>();
-            for (PairWritable<IntWritable, Text> pair : values) {
-                if(!(triGrams.contains(pair.second.toString()))){
-                    triGrams.add(pair.second().toString());
+            // each pair in values is the either a trigram and his count for nr values or the trigram and the count of the opposite group (for tr values)
+            for (PairWritable<Text, IntWritable> pair : values) {
+                if(!(triGrams.contains(pair.first.toString()))){
+                    triGrams.add(pair.first().toString());
                 }
-                sum += pair.first.get();
+                valueSum += pair.second.get();
             }
 
             for (String triGram : triGrams) {
-                context.write(new Text(triGram), new PairWritable(new IntWritable(sum), key.second));
+                // for each triGram we write the triGram as Key, and the parameter name (nr0/nr1/tr01/tr10) and it's summed up value as value.
+                context.write(new Text(triGram), new PairWritable(key.first, new IntWritable(valueSum)));
             }
         }
     }
@@ -82,13 +83,13 @@ public class RAndCrossValCounts {
 
         Configuration conf = new Configuration();
         Job job = new Job(conf, "RAndCrossValCounts");
-        job.setJarByClass(RAndCrossValCounts.class);
+        job.setJarByClass(ParamsMR.class);
 
-        job.setMapOutputKeyClass(PairIntTextWritable.class);
-        job.setMapOutputValueClass(PairIntTextWritable.class);
+        job.setMapOutputKeyClass(PairWritable.class);
+        job.setMapOutputValueClass(PairWritable.class);
 
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(PairIntTextWritable.class);
+        job.setOutputValueClass(PairWritable.class);
 
         job.setMapperClass(MapperClass.class);
         job.setReducerClass(ReducerClass.class);

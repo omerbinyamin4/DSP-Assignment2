@@ -17,7 +17,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import java.io.IOException;
 import java.net.URI;
 
-public class JoinAndCalculate {
+public class ProbCalc {
 
     public static class MapperClass extends Mapper<LongWritable, Text, Text, PairWritable<IntWritable, Text>> {
         private final static IntWritable one = new IntWritable(1);
@@ -35,7 +35,7 @@ public class JoinAndCalculate {
         }
     }
 
-    public static class ReducerClass extends Reducer<Text, PairWritable<IntWritable, Text>, Text, DoubleWritable> {
+    public static class ReducerClass extends Reducer<Text, PairWritable<Text, IntWritable>, Text, DoubleWritable> {
 
         private static Long N;
         private String bucket;
@@ -53,25 +53,25 @@ public class JoinAndCalculate {
         }
 
         @Override
-        public void reduce(Text key, Iterable<PairWritable<IntWritable, Text>> values, Context context) throws IOException,  InterruptedException {
+        public void reduce(Text key, Iterable<PairWritable<Text, IntWritable>> values, Context context) throws IOException,  InterruptedException {
             int NR0 = 0;
             int NR1 = 0;
             int TR01 = 0;
             int TR10 = 0;
-            for(PairWritable<IntWritable, Text> pair : values) {
-                String tag = pair.second.toString();
-                switch(tag) {
+            for(PairWritable<Text, IntWritable> pair : values) {
+                String paramaterName = pair.first.toString();
+                switch(paramaterName) {
                     case("NR0"): {
-                        NR0 = pair.first.get();
+                        NR0 = pair.second.get();
                     }
                     case("NR1"): {
-                        NR1 = pair.first.get();
+                        NR1 = pair.second.get();
                     }
                     case("TR01"): {
-                        TR01 = pair.first.get();
+                        TR01 = pair.second.get();
                     }
                     case("TR10"): {
-                        TR10 = pair.first.get();
+                        TR10 = pair.second.get();
                     }
                 }
             }
@@ -80,7 +80,8 @@ public class JoinAndCalculate {
 //            }
             // TODO: test double value is good
             double probability = (TR01 + TR10)/(N*(NR0+NR1));
-            context.write(key,new DoubleWritable(probability));
+            // writing each triGram as key, and its probability as value
+            context.write(key, new DoubleWritable(probability));
         }
 
     }
@@ -98,10 +99,10 @@ public class JoinAndCalculate {
         conf.set("bucketname", myBucketname);
 
         Job job = new Job(conf, "Join");
-        job.setJarByClass(JoinAndCalculate.class);
+        job.setJarByClass(ProbCalc.class);
 
         job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(PairIntTextWritable.class);
+        job.setMapOutputValueClass(PairWritable.class);
 
 
         job.setOutputKeyClass(Text.class);

@@ -50,7 +50,7 @@ Description of Map-Reduce steps:
 	in Group 0. This in addition to the number N which was written by the Trigrams m-r job gives us all the info needed in order
 	to calculate the probability for the trigram using deleted estimation.
 
-4) ValueToKeySort
+4) SortResults
 	By this stage we have all the results, we simply wanted to sort them according to the first two words in the trigram primarily,
 	and secondarily by the probability descending if the first two words are equal in two different trigrams. Because we want to be scalable
 	and make no assumptions about memory, we decided to use a ValueToKey sort which allowed the partitioner to do all the sorting for us
@@ -72,7 +72,7 @@ Combiner Explanation:
 	Here we also couldn't use a combiner (also logically wouldn't make sense because there are specifically 4 values for each key) because the aggregation
 	process calculates with division which isn't associative as we've seen in class.
 
-4) ValueToKeySort
+4) SortResults
 	The mapper simply moves the data forward to be sorted by the partitioner and therefore there is no work to be done by a combiner in this map-reduce job.
 
 
