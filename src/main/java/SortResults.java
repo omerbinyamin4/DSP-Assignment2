@@ -15,7 +15,7 @@ import java.io.IOException;
 
 public class SortResults {
 
-    public static class MapperClass extends Mapper<LongWritable, Text, PairWritable<Text, DoubleWritable>, Text> {
+    public static class MapperClass extends Mapper<LongWritable, Text, PairTxtDbl, Text> {
 
         private String[] words;
 
@@ -27,17 +27,17 @@ public class SortResults {
             String secondWord = triGramWords[1];
             String thirdWord = triGramWords[2];
 
-            DoubleWritable probabilityScore = new DoubleWritable(Double.valueOf(triGramWordsAndScore[1]));
-            context.write(new PairWritable<>(new Text(firstWord + " " + secondWord), probabilityScore), new Text(thirdWord));
+            DoubleWritable probabilityScore = new DoubleWritable(Double.parseDouble(triGramWordsAndScore[1]));
+            context.write(new PairTxtDbl(new Text(firstWord + " " + secondWord), probabilityScore), new Text(thirdWord));
         }
     }
 
-    public static class ReducerClass extends Reducer<PairWritable<Text, DoubleWritable>, Text, Text, DoubleWritable> {
+    public static class ReducerClass extends Reducer<PairTxtDbl, Text, Text, DoubleWritable> {
 
         @Override
-        public void reduce(PairWritable<Text, DoubleWritable> key, Iterable<Text> values, Context context) throws IOException,  InterruptedException {
+        public void reduce(PairTxtDbl key, Iterable<Text> values, Context context) throws IOException,  InterruptedException {
             for(Text thirdWord : values) {
-                context.write(new Text(key.first.toString() + " " + thirdWord.toString()), key.second);
+                context.write(new Text(key.first().toString() + " " + thirdWord.toString()), key.second());
             }
         }
 
@@ -55,7 +55,7 @@ public class SortResults {
         Job job = new Job(conf, "Sort");
         job.setJarByClass(SortResults.class);
 
-        job.setMapOutputKeyClass(PairWritable.class);
+        job.setMapOutputKeyClass(PairTxtDbl.class);
         job.setMapOutputValueClass(Text.class);
 
         job.setOutputKeyClass(Text.class);

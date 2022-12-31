@@ -1,13 +1,7 @@
-import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.ec2.model.InstanceType;
 import software.amazon.awssdk.services.emr.*;
-import org.apache.hadoop.mapreduce.lib.jobcontrol.ControlledJob;
-import org.apache.log4j.PropertyConfigurator;
 import software.amazon.awssdk.services.emr.model.*;
-import software.amazon.awssdk.core.traits.*;
-import com.amazonaws.*;
 
 
 import java.io.IOException;
@@ -32,7 +26,6 @@ public class Main {
     public static void main(String args[]) throws IOException, ClassNotFoundException, InterruptedException {
 //        String log4jConfPath = "C:/hadoop-2.8.0/etc/hadoop/log4j.properties";
 //        PropertyConfigurator.configure(log4jConfPath);
-
         EmrClient emrClient = EmrClient.builder()
                 .region(Region.US_EAST_1)
                 .build();
@@ -40,9 +33,11 @@ public class Main {
         List<StepConfig> steps = new LinkedList<StepConfig>();
 
         // ======================Step 1===========================
-        String GoogleEnglish3Grams = "s3://datasets.elasticmapreduce/ngrams/books/20090715/eng-us-all/3gram/data";
+        String bigInput = "s3://datasets.elasticmapreduce/ngrams/books/20090715/eng-gb-all/3gram/data";
+        String smallInput = "s3://" + myBucketName + "/" + "input.txt";
+
         HadoopJarStepConfig TriGramsStep = HadoopJarStepConfig.builder()
-                .args(myBucketName, GoogleEnglish3Grams, "s3n://" + myBucketName + "/output1/")
+                .args(myBucketName, bigInput, "s3n://" + myBucketName + "/output1/")
                 .jar("s3://" + myBucketName + "/" + myJarName)
                 .mainClass("TriGramsMR")
                 .build();
@@ -95,7 +90,7 @@ public class Main {
         steps.add(SortResultsConf);
 
         JobFlowInstancesConfig instances = JobFlowInstancesConfig.builder()
-                .instanceCount(4)
+                .instanceCount(3)
                 .masterInstanceType(InstanceType.M4_LARGE.toString())
                 .slaveInstanceType(InstanceType.M4_LARGE.toString())
                 .hadoopVersion("3.4.4").ec2KeyName(myKeyPair)
@@ -103,7 +98,14 @@ public class Main {
                 .placement(PlacementType.builder().availabilityZone("us-east-1a").build())
                 .build();
 
+        Map<String,String> m = new HashMap<>();
+        m.put("fs.s3.maxConnections", "100");
+        Configuration conf = Configuration.builder()
+                .classification("emrfs-site")
+                .properties(m)
+                .build();
         RunJobFlowRequest runFlowRequest = RunJobFlowRequest.builder()
+                .configurations(conf)
                 .releaseLabel("emr-5.2.0")
                 .name("hadoop-ass2")
                 .instances(instances)

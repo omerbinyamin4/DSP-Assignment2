@@ -1,4 +1,3 @@
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.WritableComparable;
 
 import java.io.DataInput;
@@ -10,10 +9,6 @@ public class PairWritable <T extends WritableComparable, S extends WritableCompa
     public T first;
     public S second;
 
-    public PairWritable(){
-        this.first = null;
-        this.second = null;
-    }
 
     public PairWritable(T a, S b){
         this.first = a;

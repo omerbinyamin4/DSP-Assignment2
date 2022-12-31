@@ -19,7 +19,7 @@ import java.net.URI;
 
 public class ProbCalc {
 
-    public static class MapperClass extends Mapper<LongWritable, Text, Text, PairWritable<IntWritable, Text>> {
+    public static class MapperClass extends Mapper<LongWritable, Text, Text, PairTxtInt> {
         private final static IntWritable one = new IntWritable(1);
         private String[] words;
         private Text triGram = new Text("");
@@ -30,12 +30,12 @@ public class ProbCalc {
         public void map(LongWritable key, Text value, Context context) throws IOException,  InterruptedException {
             words = value.toString().split("\t");
             triGram.set(words[0]);
-            PairWritable<IntWritable, Text> typeAndCount = new PairWritable(new IntWritable(Integer.valueOf(words[1])), new Text(words[2]));
+            PairTxtInt typeAndCount = new PairTxtInt(new Text(words[1]), new IntWritable(Integer.parseInt(words[2])));
             context.write(triGram, typeAndCount);
         }
     }
 
-    public static class ReducerClass extends Reducer<Text, PairWritable<Text, IntWritable>, Text, DoubleWritable> {
+    public static class ReducerClass extends Reducer<Text, PairTxtInt, Text, DoubleWritable> {
 
         private static Long N;
         private String bucket;
@@ -53,25 +53,25 @@ public class ProbCalc {
         }
 
         @Override
-        public void reduce(Text key, Iterable<PairWritable<Text, IntWritable>> values, Context context) throws IOException,  InterruptedException {
+        public void reduce(Text key, Iterable<PairTxtInt> values, Context context) throws IOException,  InterruptedException {
             int NR0 = 0;
             int NR1 = 0;
             int TR01 = 0;
             int TR10 = 0;
-            for(PairWritable<Text, IntWritable> pair : values) {
-                String paramaterName = pair.first.toString();
+            for(PairTxtInt pair : values) {
+                String paramaterName = pair.first().toString();
                 switch(paramaterName) {
                     case("NR0"): {
-                        NR0 = pair.second.get();
+                        NR0 = pair.second().get();
                     }
                     case("NR1"): {
-                        NR1 = pair.second.get();
+                        NR1 = pair.second().get();
                     }
                     case("TR01"): {
-                        TR01 = pair.second.get();
+                        TR01 = pair.second().get();
                     }
                     case("TR10"): {
-                        TR10 = pair.second.get();
+                        TR10 = pair.second().get();
                     }
                 }
             }
@@ -79,7 +79,7 @@ public class ProbCalc {
 //                throw new IOException("NR0, NR1, TR01, TR10 not initialized properly.");
 //            }
             // TODO: test double value is good
-            double probability = (TR01 + TR10)/(N*(NR0+NR1));
+            double probability = ((double)(TR01 + TR10)) / (N*(NR0+NR1));
             // writing each triGram as key, and its probability as value
             context.write(key, new DoubleWritable(probability));
         }
@@ -102,7 +102,7 @@ public class ProbCalc {
         job.setJarByClass(ProbCalc.class);
 
         job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(PairWritable.class);
+        job.setMapOutputValueClass(PairTxtInt.class);
 
 
         job.setOutputKeyClass(Text.class);
