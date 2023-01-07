@@ -32,12 +32,13 @@ public class SortResults {
         }
     }
 
-    public static class ReducerClass extends Reducer<PairTxtDbl, Text, Text, DoubleWritable> {
+    public static class ReducerClass extends Reducer<PairTxtDbl, Text, Text, Text> {
 
         @Override
         public void reduce(PairTxtDbl key, Iterable<Text> values, Context context) throws IOException,  InterruptedException {
             for(Text thirdWord : values) {
-                context.write(new Text(key.first().toString() + " " + thirdWord.toString()), key.second());
+                context.write(new Text(key.first().toString() + " " + thirdWord.toString()),
+                                new Text(String.format("%.12f",key.second().get())));
             }
         }
 
@@ -47,7 +48,7 @@ public class SortResults {
 
 
 
-    public static void main(String args[]) throws IOException, ClassNotFoundException, InterruptedException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
         //String log4jConfPath = "G:/hadoop-2.6.2/etc/hadoop/log4j.properties";
         //PropertyConfigurator.configure(log4jConfPath);
 
@@ -59,7 +60,7 @@ public class SortResults {
         job.setMapOutputValueClass(Text.class);
 
         job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(DoubleWritable.class);
+        job.setOutputValueClass(Text.class);
 
         job.setMapperClass(MapperClass.class);
         job.setReducerClass(ReducerClass.class);

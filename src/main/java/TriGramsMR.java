@@ -10,12 +10,10 @@ import org.apache.hadoop.mapreduce.lib.input.SequenceFileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
-
 import java.io.*;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+
 
 
 public class TriGramsMR {
@@ -29,6 +27,7 @@ public class TriGramsMR {
         private final static IntWritable zero = new IntWritable(0);
         private Text triGram = new Text("");
         private String[] words;
+        private HashMap<String, String> stopWords = getStopWords();
         private String line;
 
 
@@ -40,14 +39,14 @@ public class TriGramsMR {
                 return;
             triGram.set(words[0]);
             int currNGramLength = words[0].split(" ").length;
-            if(currNGramLength < 3 || containsStopWords(words[0], context.getConfiguration())){
+            if(currNGramLength < 3 || containsStopWords(words[0])){
                 return;
             }
 
 
             //TODO: how can be refactored?
             context.getCounter(N.Count).increment(1);
-
+            // We don't use partitioner here because we want the reducer to sum up both counts for the same key
             int corpusPartitionGroup = (int)(Math.random() * 2);
             if (corpusPartitionGroup == 0){
                 context.write(new Text(words[0]), new PairIntInt(one, zero));
@@ -55,6 +54,344 @@ public class TriGramsMR {
             else{
                 context.write(new Text(words[0]), new PairIntInt(zero, one));
             }
+        }
+
+        private boolean containsStopWords(String words) {
+            for(String word : words.split(" "))
+            if (stopWords.get(word) != null){
+                return true;
+            }
+            return false;
+        }
+        private static HashMap<String, String> getStopWords(){
+            String stopWords =
+                            "a\n" +
+                            "about\n" +
+                            "above\n" +
+                            "across\n" +
+                            "after\n" +
+                            "afterwards\n" +
+                            "again\n" +
+                            "against\n" +
+                            "all\n" +
+                            "almost\n" +
+                            "alone\n" +
+                            "along\n" +
+                            "already\n" +
+                            "also\n" +
+                            "although\n" +
+                            "always\n" +
+                            "am\n" +
+                            "among\n" +
+                            "amongst\n" +
+                            "amoungst\n" +
+                            "amount\n" +
+                            "an\n" +
+                            "and\n" +
+                            "another\n" +
+                            "any\n" +
+                            "anyhow\n" +
+                            "anyone\n" +
+                            "anything\n" +
+                            "anyway\n" +
+                            "anywhere\n" +
+                            "are\n" +
+                            "around\n" +
+                            "as\n" +
+                            "at\n" +
+                            "back\n" +
+                            "be\n" +
+                            "became\n" +
+                            "because\n" +
+                            "become\n" +
+                            "becomes\n" +
+                            "becoming\n" +
+                            "been\n" +
+                            "before\n" +
+                            "beforehand\n" +
+                            "behind\n" +
+                            "being\n" +
+                            "below\n" +
+                            "beside\n" +
+                            "besides\n" +
+                            "between\n" +
+                            "beyond\n" +
+                            "bill\n" +
+                            "both\n" +
+                            "bottom\n" +
+                            "but\n" +
+                            "by\n" +
+                            "call\n" +
+                            "can\n" +
+                            "cannot\n" +
+                            "cant\n" +
+                            "co\n" +
+                            "computer\n" +
+                            "con\n" +
+                            "could\n" +
+                            "couldnt\n" +
+                            "cry\n" +
+                            "de\n" +
+                            "describe\n" +
+                            "detail\n" +
+                            "do\n" +
+                            "done\n" +
+                            "down\n" +
+                            "due\n" +
+                            "during\n" +
+                            "each\n" +
+                            "eg\n" +
+                            "eight\n" +
+                            "either\n" +
+                            "eleven\n" +
+                            "else\n" +
+                            "elsewhere\n" +
+                            "empty\n" +
+                            "enough\n" +
+                            "etc\n" +
+                            "even\n" +
+                            "ever\n" +
+                            "every\n" +
+                            "everyone\n" +
+                            "everything\n" +
+                            "everywhere\n" +
+                            "except\n" +
+                            "few\n" +
+                            "fifteen\n" +
+                            "fify\n" +
+                            "fill\n" +
+                            "find\n" +
+                            "fire\n" +
+                            "first\n" +
+                            "five\n" +
+                            "for\n" +
+                            "former\n" +
+                            "formerly\n" +
+                            "forty\n" +
+                            "found\n" +
+                            "four\n" +
+                            "from\n" +
+                            "front\n" +
+                            "full\n" +
+                            "further\n" +
+                            "get\n" +
+                            "give\n" +
+                            "go\n" +
+                            "had\n" +
+                            "has\n" +
+                            "hasnt\n" +
+                            "have\n" +
+                            "he\n" +
+                            "hence\n" +
+                            "her\n" +
+                            "here\n" +
+                            "hereafter\n" +
+                            "hereby\n" +
+                            "herein\n" +
+                            "hereupon\n" +
+                            "hers\n" +
+                            "herself\n" +
+                            "him\n" +
+                            "himself\n" +
+                            "his\n" +
+                            "how\n" +
+                            "however\n" +
+                            "hundred\n" +
+                            "i\n" +
+                            "ie\n" +
+                            "if\n" +
+                            "in\n" +
+                            "inc\n" +
+                            "indeed\n" +
+                            "interest\n" +
+                            "into\n" +
+                            "is\n" +
+                            "it\n" +
+                            "its\n" +
+                            "itself\n" +
+                            "keep\n" +
+                            "last\n" +
+                            "latter\n" +
+                            "latterly\n" +
+                            "least\n" +
+                            "less\n" +
+                            "ltd\n" +
+                            "made\n" +
+                            "many\n" +
+                            "may\n" +
+                            "me\n" +
+                            "meanwhile\n" +
+                            "might\n" +
+                            "mill\n" +
+                            "mine\n" +
+                            "more\n" +
+                            "moreover\n" +
+                            "most\n" +
+                            "mostly\n" +
+                            "move\n" +
+                            "much\n" +
+                            "must\n" +
+                            "my\n" +
+                            "myself\n" +
+                            "name\n" +
+                            "namely\n" +
+                            "neither\n" +
+                            "never\n" +
+                            "nevertheless\n" +
+                            "next\n" +
+                            "nine\n" +
+                            "no\n" +
+                            "nobody\n" +
+                            "none\n" +
+                            "noone\n" +
+                            "nor\n" +
+                            "not\n" +
+                            "nothing\n" +
+                            "now\n" +
+                            "nowhere\n" +
+                            "of\n" +
+                            "off\n" +
+                            "often\n" +
+                            "on\n" +
+                            "once\n" +
+                            "one\n" +
+                            "only\n" +
+                            "onto\n" +
+                            "or\n" +
+                            "other\n" +
+                            "others\n" +
+                            "otherwise\n" +
+                            "our\n" +
+                            "ours\n" +
+                            "ourselves\n" +
+                            "out\n" +
+                            "over\n" +
+                            "own\n" +
+                            "part\n" +
+                            "per\n" +
+                            "perhaps\n" +
+                            "please\n" +
+                            "put\n" +
+                            "rather\n" +
+                            "re\n" +
+                            "same\n" +
+                            "see\n" +
+                            "seem\n" +
+                            "seemed\n" +
+                            "seeming\n" +
+                            "seems\n" +
+                            "serious\n" +
+                            "several\n" +
+                            "she\n" +
+                            "should\n" +
+                            "show\n" +
+                            "side\n" +
+                            "since\n" +
+                            "sincere\n" +
+                            "six\n" +
+                            "sixty\n" +
+                            "so\n" +
+                            "some\n" +
+                            "somehow\n" +
+                            "someone\n" +
+                            "something\n" +
+                            "sometime\n" +
+                            "sometimes\n" +
+                            "somewhere\n" +
+                            "still\n" +
+                            "such\n" +
+                            "system\n" +
+                            "take\n" +
+                            "ten\n" +
+                            "than\n" +
+                            "that\n" +
+                            "the\n" +
+                            "their\n" +
+                            "them\n" +
+                            "themselves\n" +
+                            "then\n" +
+                            "thence\n" +
+                            "there\n" +
+                            "thereafter\n" +
+                            "thereby\n" +
+                            "therefore\n" +
+                            "therein\n" +
+                            "thereupon\n" +
+                            "these\n" +
+                            "they\n" +
+                            "thick\n" +
+                            "thin\n" +
+                            "third\n" +
+                            "this\n" +
+                            "those\n" +
+                            "though\n" +
+                            "three\n" +
+                            "through\n" +
+                            "throughout\n" +
+                            "thru\n" +
+                            "thus\n" +
+                            "to\n" +
+                            "together\n" +
+                            "too\n" +
+                            "top\n" +
+                            "toward\n" +
+                            "towards\n" +
+                            "twelve\n" +
+                            "twenty\n" +
+                            "two\n" +
+                            "un\n" +
+                            "under\n" +
+                            "until\n" +
+                            "up\n" +
+                            "upon\n" +
+                            "us\n" +
+                            "very\n" +
+                            "via\n" +
+                            "was\n" +
+                            "we\n" +
+                            "well\n" +
+                            "were\n" +
+                            "what\n" +
+                            "whatever\n" +
+                            "when\n" +
+                            "whence\n" +
+                            "whenever\n" +
+                            "where\n" +
+                            "whereafter\n" +
+                            "whereas\n" +
+                            "whereby\n" +
+                            "wherein\n" +
+                            "whereupon\n" +
+                            "wherever\n" +
+                            "whether\n" +
+                            "which\n" +
+                            "while\n" +
+                            "whither\n" +
+                            "who\n" +
+                            "whoever\n" +
+                            "whole\n" +
+                            "whom\n" +
+                            "whose\n" +
+                            "why\n" +
+                            "will\n" +
+                            "with\n" +
+                            "within\n" +
+                            "without\n" +
+                            "would\n" +
+                            "yet\n" +
+                            "you\n" +
+                            "your\n" +
+                            "yours\n" +
+                            "yourself\n" +
+                            "yourselves";
+            String[] stopList = stopWords.split("\n");
+            HashMap<String, String> map = new HashMap<>();
+
+            for(String stopWord : stopList){
+                map.put(stopWord, stopWord);
+            }
+
+            return map;
         }
     }
 
@@ -73,7 +410,7 @@ public class TriGramsMR {
     }
 
     //TODO: refactor to updated version of hadoop
-    public static void main(String args[]) throws IOException, ClassNotFoundException, InterruptedException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
 
         Configuration conf = new Configuration();
         int argsLength = args.length;
@@ -121,336 +458,6 @@ public class TriGramsMR {
 
     }
 
-    private static boolean containsStopWords(String triGram, Configuration conf){
-        List<String> wordsList = new ArrayList<>(Arrays.asList(triGram.split("")));
-        String stopWords =
-                "a\n" +
-                "about\n" +
-                "above\n" +
-                "across\n" +
-                "after\n" +
-                "afterwards\n" +
-                "again\n" +
-                "against\n" +
-                "all\n" +
-                "almost\n" +
-                "alone\n" +
-                "along\n" +
-                "already\n" +
-                "also\n" +
-                "although\n" +
-                "always\n" +
-                "am\n" +
-                "among\n" +
-                "amongst\n" +
-                "amoungst\n" +
-                "amount\n" +
-                "an\n" +
-                "and\n" +
-                "another\n" +
-                "any\n" +
-                "anyhow\n" +
-                "anyone\n" +
-                "anything\n" +
-                "anyway\n" +
-                "anywhere\n" +
-                "are\n" +
-                "around\n" +
-                "as\n" +
-                "at\n" +
-                "back\n" +
-                "be\n" +
-                "became\n" +
-                "because\n" +
-                "become\n" +
-                "becomes\n" +
-                "becoming\n" +
-                "been\n" +
-                "before\n" +
-                "beforehand\n" +
-                "behind\n" +
-                "being\n" +
-                "below\n" +
-                "beside\n" +
-                "besides\n" +
-                "between\n" +
-                "beyond\n" +
-                "bill\n" +
-                "both\n" +
-                "bottom\n" +
-                "but\n" +
-                "by\n" +
-                "call\n" +
-                "can\n" +
-                "cannot\n" +
-                "cant\n" +
-                "co\n" +
-                "computer\n" +
-                "con\n" +
-                "could\n" +
-                "couldnt\n" +
-                "cry\n" +
-                "de\n" +
-                "describe\n" +
-                "detail\n" +
-                "do\n" +
-                "done\n" +
-                "down\n" +
-                "due\n" +
-                "during\n" +
-                "each\n" +
-                "eg\n" +
-                "eight\n" +
-                "either\n" +
-                "eleven\n" +
-                "else\n" +
-                "elsewhere\n" +
-                "empty\n" +
-                "enough\n" +
-                "etc\n" +
-                "even\n" +
-                "ever\n" +
-                "every\n" +
-                "everyone\n" +
-                "everything\n" +
-                "everywhere\n" +
-                "except\n" +
-                "few\n" +
-                "fifteen\n" +
-                "fify\n" +
-                "fill\n" +
-                "find\n" +
-                "fire\n" +
-                "first\n" +
-                "five\n" +
-                "for\n" +
-                "former\n" +
-                "formerly\n" +
-                "forty\n" +
-                "found\n" +
-                "four\n" +
-                "from\n" +
-                "front\n" +
-                "full\n" +
-                "further\n" +
-                "get\n" +
-                "give\n" +
-                "go\n" +
-                "had\n" +
-                "has\n" +
-                "hasnt\n" +
-                "have\n" +
-                "he\n" +
-                "hence\n" +
-                "her\n" +
-                "here\n" +
-                "hereafter\n" +
-                "hereby\n" +
-                "herein\n" +
-                "hereupon\n" +
-                "hers\n" +
-                "herself\n" +
-                "him\n" +
-                "himself\n" +
-                "his\n" +
-                "how\n" +
-                "however\n" +
-                "hundred\n" +
-                "i\n" +
-                "ie\n" +
-                "if\n" +
-                "in\n" +
-                "inc\n" +
-                "indeed\n" +
-                "interest\n" +
-                "into\n" +
-                "is\n" +
-                "it\n" +
-                "its\n" +
-                "itself\n" +
-                "keep\n" +
-                "last\n" +
-                "latter\n" +
-                "latterly\n" +
-                "least\n" +
-                "less\n" +
-                "ltd\n" +
-                "made\n" +
-                "many\n" +
-                "may\n" +
-                "me\n" +
-                "meanwhile\n" +
-                "might\n" +
-                "mill\n" +
-                "mine\n" +
-                "more\n" +
-                "moreover\n" +
-                "most\n" +
-                "mostly\n" +
-                "move\n" +
-                "much\n" +
-                "must\n" +
-                "my\n" +
-                "myself\n" +
-                "name\n" +
-                "namely\n" +
-                "neither\n" +
-                "never\n" +
-                "nevertheless\n" +
-                "next\n" +
-                "nine\n" +
-                "no\n" +
-                "nobody\n" +
-                "none\n" +
-                "noone\n" +
-                "nor\n" +
-                "not\n" +
-                "nothing\n" +
-                "now\n" +
-                "nowhere\n" +
-                "of\n" +
-                "off\n" +
-                "often\n" +
-                "on\n" +
-                "once\n" +
-                "one\n" +
-                "only\n" +
-                "onto\n" +
-                "or\n" +
-                "other\n" +
-                "others\n" +
-                "otherwise\n" +
-                "our\n" +
-                "ours\n" +
-                "ourselves\n" +
-                "out\n" +
-                "over\n" +
-                "own\n" +
-                "part\n" +
-                "per\n" +
-                "perhaps\n" +
-                "please\n" +
-                "put\n" +
-                "rather\n" +
-                "re\n" +
-                "same\n" +
-                "see\n" +
-                "seem\n" +
-                "seemed\n" +
-                "seeming\n" +
-                "seems\n" +
-                "serious\n" +
-                "several\n" +
-                "she\n" +
-                "should\n" +
-                "show\n" +
-                "side\n" +
-                "since\n" +
-                "sincere\n" +
-                "six\n" +
-                "sixty\n" +
-                "so\n" +
-                "some\n" +
-                "somehow\n" +
-                "someone\n" +
-                "something\n" +
-                "sometime\n" +
-                "sometimes\n" +
-                "somewhere\n" +
-                "still\n" +
-                "such\n" +
-                "system\n" +
-                "take\n" +
-                "ten\n" +
-                "than\n" +
-                "that\n" +
-                "the\n" +
-                "their\n" +
-                "them\n" +
-                "themselves\n" +
-                "then\n" +
-                "thence\n" +
-                "there\n" +
-                "thereafter\n" +
-                "thereby\n" +
-                "therefore\n" +
-                "therein\n" +
-                "thereupon\n" +
-                "these\n" +
-                "they\n" +
-                "thick\n" +
-                "thin\n" +
-                "third\n" +
-                "this\n" +
-                "those\n" +
-                "though\n" +
-                "three\n" +
-                "through\n" +
-                "throughout\n" +
-                "thru\n" +
-                "thus\n" +
-                "to\n" +
-                "together\n" +
-                "too\n" +
-                "top\n" +
-                "toward\n" +
-                "towards\n" +
-                "twelve\n" +
-                "twenty\n" +
-                "two\n" +
-                "un\n" +
-                "under\n" +
-                "until\n" +
-                "up\n" +
-                "upon\n" +
-                "us\n" +
-                "very\n" +
-                "via\n" +
-                "was\n" +
-                "we\n" +
-                "well\n" +
-                "were\n" +
-                "what\n" +
-                "whatever\n" +
-                "when\n" +
-                "whence\n" +
-                "whenever\n" +
-                "where\n" +
-                "whereafter\n" +
-                "whereas\n" +
-                "whereby\n" +
-                "wherein\n" +
-                "whereupon\n" +
-                "wherever\n" +
-                "whether\n" +
-                "which\n" +
-                "while\n" +
-                "whither\n" +
-                "who\n" +
-                "whoever\n" +
-                "whole\n" +
-                "whom\n" +
-                "whose\n" +
-                "why\n" +
-                "will\n" +
-                "with\n" +
-                "within\n" +
-                "without\n" +
-                "would\n" +
-                "yet\n" +
-                "you\n" +
-                "your\n" +
-                "yours\n" +
-                "yourself\n" +
-                "yourselves";
-        List<String> stopList = new ArrayList<>(Arrays.asList(stopWords.split("\n")));
-        for(String word : wordsList){
-            if(stopList.contains(word)){
-                return true;
-            }
-        }
 
-        return false;
-    }
 
 }

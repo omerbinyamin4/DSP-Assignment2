@@ -76,7 +76,7 @@ public class ParamsMR {
     }
 
     //TODO: refactor to updated version of Hadoop
-    public static void main(String args[]) throws IOException, ClassNotFoundException, InterruptedException {
+    public static void main(String[] args) throws IOException, ClassNotFoundException, InterruptedException {
         //String log4jConfPath = "C:/hadoop-2.8.0/etc/hadoop/log4j.properties";
         //PropertyConfigurator.configure(log4jConfPath);
 

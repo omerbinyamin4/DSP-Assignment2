@@ -16,16 +16,14 @@ public class Main {
     private static final String myBucketName = "dsp2-hadoop";
     private static final String TriGramsCount = "TriGramsMR";
     private static final String ParamsMR = "ParamsMR";
-    private static final String myJarName = "ass2LA.jar";
-//    private static final String myJarName = "ass2jar.jar";
+//    private static final String myJarName = "ass2LA.jar"; // JAR with combiner
+    private static final String myJarName = "ass2.jar"; // JAR without combiner
     private static final String ProbCalc = "ProbCalc";
     private static final String SortResults = "SortResults";
-    private static final String myKeyPair = "arnon";
 
 
     public static void main(String args[]) throws IOException, ClassNotFoundException, InterruptedException {
-//        String log4jConfPath = "C:/hadoop-2.8.0/etc/hadoop/log4j.properties";
-//        PropertyConfigurator.configure(log4jConfPath);
+
         EmrClient emrClient = EmrClient.builder()
                 .region(Region.US_EAST_1)
                 .build();
@@ -33,11 +31,10 @@ public class Main {
         List<StepConfig> steps = new LinkedList<StepConfig>();
 
         // ======================Step 1===========================
-        String bigInput = "s3://datasets.elasticmapreduce/ngrams/books/20090715/eng-gb-all/3gram/data";
-        String smallInput = "s3://" + myBucketName + "/" + "input.txt";
+        String input = "s3://datasets.elasticmapreduce/ngrams/books/20090715/eng-us-all/3gram/data";
 
         HadoopJarStepConfig TriGramsStep = HadoopJarStepConfig.builder()
-                .args(myBucketName, bigInput, "s3n://" + myBucketName + "/output1/")
+                .args(myBucketName, input, "s3n://" + myBucketName + "/output1NLA/")
                 .jar("s3://" + myBucketName + "/" + myJarName)
                 .mainClass("TriGramsMR")
                 .build();
@@ -48,7 +45,7 @@ public class Main {
                 .build();
         // ======================Step 2===========================
         HadoopJarStepConfig ParamsMRStep = HadoopJarStepConfig.builder()
-                .args("s3n://" + myBucketName + "/output1/", "s3n://" + myBucketName + "/output2/")
+                .args("s3n://" + myBucketName + "/output1NLA/", "s3n://" + myBucketName + "/output2NLA/")
                 .jar("s3://" + myBucketName + "/" + myJarName)
                 .mainClass("ParamsMR")
                 .build();
@@ -57,10 +54,10 @@ public class Main {
                 .hadoopJarStep(ParamsMRStep)
                 .actionOnFailure("TERMINATE_JOB_FLOW")
                 .build();
-//
+
 //        // ======================Step 3===========================
         HadoopJarStepConfig ProbCalcStep = HadoopJarStepConfig.builder()
-                .args(myBucketName, "s3n://" + myBucketName + "/output2/", "s3n://" + myBucketName + "/output3/")
+                .args(myBucketName, "s3n://" + myBucketName + "/output2NLA/", "s3n://" + myBucketName + "/output3NLA/")
                 .jar("s3://" + myBucketName + "/" + myJarName)
                 .mainClass("ProbCalc")
                 .build();
@@ -69,11 +66,10 @@ public class Main {
                 .hadoopJarStep(ProbCalcStep)
                 .actionOnFailure("TERMINATE_JOB_FLOW")
                 .build();
-//
-//
-//        // ======================Step 4===========================
+
+//        ======================Step 4===========================
         HadoopJarStepConfig SortResultsStep = HadoopJarStepConfig.builder()
-                .args("s3n://" + myBucketName + "/output3/", "s3n://" + myBucketName + "/output4/")
+                .args("s3n://" + myBucketName + "/output3NLA/", "s3n://" + myBucketName + "/output4NLA/")
                 .jar("s3://" + myBucketName + "/" + myJarName)
                 .mainClass("SortResults")
                 .build();
@@ -90,22 +86,16 @@ public class Main {
         steps.add(SortResultsConf);
 
         JobFlowInstancesConfig instances = JobFlowInstancesConfig.builder()
-                .instanceCount(3)
+                .instanceCount(6)
                 .masterInstanceType(InstanceType.M4_LARGE.toString())
                 .slaveInstanceType(InstanceType.M4_LARGE.toString())
-                .hadoopVersion("3.4.4").ec2KeyName(myKeyPair)
+                .hadoopVersion("3.4.4")
                 .keepJobFlowAliveWhenNoSteps(false)
                 .placement(PlacementType.builder().availabilityZone("us-east-1a").build())
                 .build();
 
-        Map<String,String> m = new HashMap<>();
-        m.put("fs.s3.maxConnections", "100");
-        Configuration conf = Configuration.builder()
-                .classification("emrfs-site")
-                .properties(m)
-                .build();
+
         RunJobFlowRequest runFlowRequest = RunJobFlowRequest.builder()
-                .configurations(conf)
                 .releaseLabel("emr-5.2.0")
                 .name("hadoop-ass2")
                 .instances(instances)
