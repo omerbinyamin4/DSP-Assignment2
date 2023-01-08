@@ -1,0 +1,6 @@
+Without local aggregation in our first step : The Reduce input records value = 2,245,444,717
+Their size is : 6,392,192,844 (i.e Map output materialized bytes)
+
+
+With local aggregation in our first step : The Reduce input records value = 45,306,318
+Their size is : 805,676,432 (i.e Map output materialized bytes)
