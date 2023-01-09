@@ -19,4 +19,34 @@
 
 # Map-Reduce Steps:
 
+        1. TriGramMR:
+            map:
+                maps each line to the trigram (validate 3 words, and remove stopwords) and a group (random 1 or 0)
+            reduce:
+                group all trigrams (as key) and the count of each group (as a pair of ints)
+
+        2. ParamsMR
+            map:
+                from each trigram we create the 4 entries (each for every param) which will be summed up to the nr0, nr1, tr01, tr10 of the whole corpus
+            reduce:
+                1. key: NR0, *SOME R VALUE* -> we sum the number of trigrams appeared R times in group 0 and write for each trigram its nr0 value
+                2. key: NR1, *SOME R VALUE* -> we sum the number of trigrams appeared R times in group 1 and write for each trigram its nr1 value
+                3. key: TR01, *SOME R VALUE* -> we sum the number of appearances in group 1 of trigrams which appeared R times in group 0 and write it as tr01 value for each trigram
+                4. key: TR10, *SOME R VALUE* -> we sum the number of appearances in group 0 of trigrams which appeared R times in group 1 and write it as tr10 value for each trigram
+
+        3. ProbCalc
+            map: organizes the params to match one key (the trigram) in the reduce func
+                (result of map for giver trigram t is:
+                    t, (nr0, *some value*)
+                    t, (nr1, *some value*)
+                    t, (tr01, *some value*)
+                    t, (nr10, *some value*))
+             reduce:
+                given a key which is the trigram, we now can finally calculate the formula according to all 4 params mentioned above.
+
+        4. SortResults:
+            map: for sorting purposes we arrange like this:
+               ((word1, word2, word3), score) -> ((word1 word2, score), word3)
+            reduce: now when reducing all results by key (word1 word3, score) it is converted back to the form (word1 word3 word3, score)
+                    but sorted topologically by the first two words and then the score.
 
