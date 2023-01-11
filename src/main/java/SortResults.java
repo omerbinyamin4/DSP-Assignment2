@@ -15,9 +15,7 @@ import java.io.IOException;
 
 public class SortResults {
 
-    public static class MapperClass extends Mapper<LongWritable, Text, PairTxtDbl, Text> {
-
-        private String[] words;
+    public static class MapperClass extends Mapper<LongWritable, Text, PairTxtDbl, Text > {
 
         @Override
         public void map(LongWritable key, Text value, Context context) throws IOException,  InterruptedException {
@@ -28,7 +26,7 @@ public class SortResults {
             String thirdWord = triGramWords[2];
 
             DoubleWritable probabilityScore = new DoubleWritable(Double.parseDouble(triGramWordsAndScore[1]));
-            context.write(new PairTxtDbl(new Text(firstWord + " " + secondWord), probabilityScore), new Text(thirdWord));
+            context.write(new PairTxtDbl(new Text(firstWord + " " + secondWord),probabilityScore), new Text(thirdWord));
         }
     }
 

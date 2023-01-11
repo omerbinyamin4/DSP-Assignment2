@@ -17,7 +17,7 @@ public class Main {
     private static final String TriGramsCount = "TriGramsMR";
     private static final String ParamsMR = "ParamsMR";
 //    private static final String myJarName = "ass2LA.jar"; // JAR with combiner
-    private static final String myJarName = "ass2.jar"; // JAR without combiner
+    private static final String myJarName = "Ass2Sort.jar"; // JAR without combiner
     private static final String ProbCalc = "ProbCalc";
     private static final String SortResults = "SortResults";
 
@@ -34,7 +34,7 @@ public class Main {
         String input = "s3://datasets.elasticmapreduce/ngrams/books/20090715/eng-us-all/3gram/data";
 
         HadoopJarStepConfig TriGramsStep = HadoopJarStepConfig.builder()
-                .args(myBucketName, input, "s3n://" + myBucketName + "/output1NLA/")
+                .args(myBucketName, input, "s3n://" + myBucketName + "/output1Submission/")
                 .jar("s3://" + myBucketName + "/" + myJarName)
                 .mainClass("TriGramsMR")
                 .build();
@@ -45,7 +45,7 @@ public class Main {
                 .build();
         // ======================Step 2===========================
         HadoopJarStepConfig ParamsMRStep = HadoopJarStepConfig.builder()
-                .args("s3n://" + myBucketName + "/output1NLA/", "s3n://" + myBucketName + "/output2NLA/")
+                .args("s3n://" + myBucketName + "/output1Submission/", "s3n://" + myBucketName + "/output2Submission/")
                 .jar("s3://" + myBucketName + "/" + myJarName)
                 .mainClass("ParamsMR")
                 .build();
@@ -57,7 +57,7 @@ public class Main {
 
 //        // ======================Step 3===========================
         HadoopJarStepConfig ProbCalcStep = HadoopJarStepConfig.builder()
-                .args(myBucketName, "s3n://" + myBucketName + "/output2NLA/", "s3n://" + myBucketName + "/output3NLA/")
+                .args(myBucketName, "s3n://" + myBucketName + "/output2Submission/", "s3n://" + myBucketName + "/output3Submission/")
                 .jar("s3://" + myBucketName + "/" + myJarName)
                 .mainClass("ProbCalc")
                 .build();
@@ -69,7 +69,7 @@ public class Main {
 
 //        ======================Step 4===========================
         HadoopJarStepConfig SortResultsStep = HadoopJarStepConfig.builder()
-                .args("s3n://" + myBucketName + "/output3NLA/", "s3n://" + myBucketName + "/output4NLA/")
+                .args("s3n://" + myBucketName + "/output3Submission/", "s3n://" + myBucketName + "/output4Submission/")
                 .jar("s3://" + myBucketName + "/" + myJarName)
                 .mainClass("SortResults")
                 .build();

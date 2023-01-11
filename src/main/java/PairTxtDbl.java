@@ -46,7 +46,7 @@ public class PairTxtDbl implements WritableComparable {
     public int compareTo(Object o) {
         PairTxtDbl other = (PairTxtDbl) o;
         int firstCompare = this.first.compareTo(other.first);
-        return firstCompare != 0 ? firstCompare : this.second.compareTo(other.second);
+        return firstCompare != 0 ? firstCompare : -1 * this.second.compareTo(other.second);
     }
 
     @Override

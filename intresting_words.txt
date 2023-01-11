@@ -1,0 +1,98 @@
+you are : 
+
+You Are Going	0.000000021240
+You Are There	0.000000018314
+You Are Now	0.000000013883
+You Are Never	0.000000012948
+You Are Looking	0.000000012465
+
+seems good , common verbs and situations
+
+but what :
+
+But What Do	0.000000010191
+But What If	0.000000008011
+But What Can	0.000000007568
+But What ?	0.000000005368
+But What You	0.000000003998
+
+here it seems reasonable that the most common third words would be the start of a question 
+
+
+you drink :
+
+You drink coffee	0.000000011150
+You drink milk	0.000000000446
+You drink .	0.000000000445
+You drink ?	0.000000000445
+You drink tea	0.000000000445
+
+this one suprising , not sure from what period this data is taken. but coffee is most common ? why not water or even alcohol can make sense
+
+young jewish : 
+
+young Jewish immigrants	0.000000013870
+young Jewish scholar	0.000000013854
+young Jewish doctor	0.000000012946
+young Jewish -	0.000000011081
+young Jewish immigrant	0.000000009829
+
+yes, immigrant, scholars and doctors seems pretty true throughout the jewish history
+
+young black :
+
+young black man	0.000000018481
+young black bear	0.000000016858
+young black -	0.000000016709
+young black boys	0.000000012079
+young black fellow	0.000000011686
+
+in oppose to young jewish , this one seems less accurate but it makes sense
+
+WANT TO :
+
+WANT TO BE	0.000000031392
+WANT TO SEE	0.000000022309
+WANT TO GET	0.000000020731
+WANT TO LIVE	0.000000018534
+WANT TO READ	0.000000016915
+
+The basics verbs and needs , we agree with it
+
+young woman's : 
+
+young woman's face	0.000000038079
+young woman's head	0.000000029223
+young woman's voice	0.000000024368
+young woman's husband	0.000000018829
+young woman's family	0.000000017848
+
+young man's:
+
+young man's life	0.000000049630
+young man's shoulder	0.000000042857
+young man's hand	0.000000039135
+young man's appearance	0.000000038427
+young man's manner	0.000000037644
+
+womans face,head,voice,family are more estatic than young mans life, shoulder, hand .. 
+
+avoid paying :
+
+avoid paying attention	0.000000015235
+avoid paying income	0.000000015128
+avoid paying tribute	0.000000014267
+avoid paying duty	0.000000013647
+avoid paying taxes	0.000000012815
+
+all 5 has pretty close probability which make sense - they are all about the money 
+
+modern international:
+
+modern international law	0.000000019034
+modern international trade	0.000000018876
+modern international economy	0.000000010205
+modern international practice	0.000000009817
+modern international affairs	0.000000009351
+
+its not straight forward here but it seems logical
